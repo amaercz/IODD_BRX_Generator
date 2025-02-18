@@ -25,7 +25,7 @@ Public Class Form1
 
     Private currentFile As String
 
-    Private frmBrxExp As New frmBrxExport
+
 
     Private Async Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Dim userDataFolder As String = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\IODD_XML_parser"
@@ -122,21 +122,18 @@ Public Class Form1
         End If
     End Sub
 
+    Private Sub LicenseToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles LicenseToolStripMenuItem.Click
+        Dim strLicense As String = $"
+MIT License
 
+Copyright (c) 2025 AMADC
 
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the ""Software""), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-    'Private Sub ExportBRXToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ExportBRXToolStripMenuItem.Click
-    '    If IsNothing(ds) Then Return
-    '    frmBrxExp = New frmBrxExport
-    '    frmBrxExp.ds = New DataSet
-    '    frmBrxExp.ds.Merge(ds)
-    '    If Not IsNothing(tscbIolMasterPorts.SelectedItem) Then
-    '        frmBrxExp.inOffset = CType(tscbIolMasterPorts.SelectedItem, portInfo).inByteStart
-    '        frmBrxExp.outOffset = CType(tscbIolMasterPorts.SelectedItem, portInfo).outByteStart
-    '        frmBrxExp.port = CType(tscbIolMasterPorts.SelectedItem, portInfo).name
-    '    End If
+THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
 
-    '    frmBrxExp.ShowDialog()
-    'End Sub
+        MsgBox(strLicense, MsgBoxStyle.Information, "License")
+    End Sub
 End Class

@@ -131,12 +131,6 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmBrxExport.Designer.vb">
-      <DependentUpon>frmBrxExport.vb</DependentUpon>
-    </Compile>
-    <Compile Include="frmBrxExport.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="mBrxExport.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -160,9 +154,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.vb</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="frmBrxExport.resx">
-      <DependentUpon>frmBrxExport.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>

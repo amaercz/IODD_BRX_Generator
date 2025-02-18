@@ -431,7 +431,7 @@
         "DisplayName" = "8:Release"
         "IsDebugOnly" = "11:FALSE"
         "IsReleaseOnly" = "11:TRUE"
-        "OutputFilename" = "8:Release\\IODD1.1_Doc_Generator.msi"
+        "OutputFilename" = "8:Release\\IODD1.1_BRX_Exporter.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -1108,20 +1108,24 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:IODD1.1 Doc Generator"
-        "ProductCode" = "8:{D364115F-932D-47CD-8634-29AD503F4A45}"
-        "PackageCode" = "8:{EA10D514-6E21-4E32-8CB2-3D3055B3271E}"
+
+        "ProductName" = "8:IODD1.1 Brx Exporter"
+        "ProductCode" = "8:{8A606625-8B64-46F8-AACF-6A8F1BEED748}"
+        "PackageCode" = "8:{2A864D05-E26C-4A5F-BCF0-B3D250556571}"
+
         "UpgradeCode" = "8:{1538AA66-3E18-4111-82AD-350F34833BB1}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:FALSE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.0.9"
+
+        "ProductVersion" = "8:1.1.102"
         "Manufacturer" = "8:AMADC"
+
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:IODD1.1_Doc_Generator"
+        "Title" = "8:IODD1.1_Brx_Exporter"
         "Subject" = "8:"
         "ARPCONTACT" = "8:AMADC"
         "Keywords" = "8:"
@@ -1232,7 +1236,7 @@
         {
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_68279194D9134EBA94FACD48D227DF51"
             {
-            "Name" = "8:IODD Doc Generator"
+            "Name" = "8:IODD Brx Exporter"
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
@@ -1739,7 +1743,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_B4170ED22508456EB065E03A9A82B3D7"
             {
-            "SourcePath" = "8:..\\IODD_Doc_Generator\\obj\\Release\\IODD_Doc_Generator.exe"
+            "SourcePath" = "8:"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_9741841A90A5489B806A2D064D471703"

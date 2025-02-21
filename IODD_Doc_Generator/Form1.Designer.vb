@@ -371,9 +371,9 @@ Partial Class Form1
         Me.Label5.Location = New System.Drawing.Point(176, 47)
         Me.Label5.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
         Me.Label5.Name = "Label5"
-        Me.Label5.Size = New System.Drawing.Size(285, 20)
+        Me.Label5.Size = New System.Drawing.Size(423, 20)
         Me.Label5.TabIndex = 8
-        Me.Label5.Text = "<- Edit to match scanner input block start index"
+        Me.Label5.Text = "<- Edit to match scanner input block start index (if it does not start at 0)"
         Me.Label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         '
         'nudSourceStartElement
@@ -388,7 +388,7 @@ Partial Class Form1
         'lbSourcePortByteOffset
         '
         Me.lbSourcePortByteOffset.AutoSize = True
-        Me.lbSourcePortByteOffset.Location = New System.Drawing.Point(499, 34)
+        Me.lbSourcePortByteOffset.Location = New System.Drawing.Point(599, 26)
         Me.lbSourcePortByteOffset.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
         Me.lbSourcePortByteOffset.Name = "lbSourcePortByteOffset"
         Me.lbSourcePortByteOffset.Size = New System.Drawing.Size(81, 13)
@@ -419,7 +419,7 @@ Partial Class Form1
         '
         'nudSourcePortByteOffset
         '
-        Me.nudSourcePortByteOffset.Location = New System.Drawing.Point(594, 32)
+        Me.nudSourcePortByteOffset.Location = New System.Drawing.Point(684, 22)
         Me.nudSourcePortByteOffset.Margin = New System.Windows.Forms.Padding(2)
         Me.nudSourcePortByteOffset.Maximum = New Decimal(New Integer() {999, 0, 0, 0})
         Me.nudSourcePortByteOffset.Name = "nudSourcePortByteOffset"
@@ -694,7 +694,7 @@ Partial Class Form1
         'lbTargetPortByteOffset
         '
         Me.lbTargetPortByteOffset.AutoSize = True
-        Me.lbTargetPortByteOffset.Location = New System.Drawing.Point(499, 41)
+        Me.lbTargetPortByteOffset.Location = New System.Drawing.Point(599, 25)
         Me.lbTargetPortByteOffset.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
         Me.lbTargetPortByteOffset.Name = "lbTargetPortByteOffset"
         Me.lbTargetPortByteOffset.Size = New System.Drawing.Size(81, 13)
@@ -715,7 +715,7 @@ Partial Class Form1
         '
         'nudTargetPortByteOffset
         '
-        Me.nudTargetPortByteOffset.Location = New System.Drawing.Point(594, 39)
+        Me.nudTargetPortByteOffset.Location = New System.Drawing.Point(684, 23)
         Me.nudTargetPortByteOffset.Margin = New System.Windows.Forms.Padding(2)
         Me.nudTargetPortByteOffset.Maximum = New Decimal(New Integer() {999, 0, 0, 0})
         Me.nudTargetPortByteOffset.Name = "nudTargetPortByteOffset"
@@ -1035,9 +1035,9 @@ Partial Class Form1
         Me.Label6.Location = New System.Drawing.Point(176, 49)
         Me.Label6.Margin = New System.Windows.Forms.Padding(2, 0, 2, 0)
         Me.Label6.Name = "Label6"
-        Me.Label6.Size = New System.Drawing.Size(295, 21)
+        Me.Label6.Size = New System.Drawing.Size(423, 21)
         Me.Label6.TabIndex = 10
-        Me.Label6.Text = "<- Edit to match scanner output block start index"
+        Me.Label6.Text = "<- Edit to match scanner output block start index (if it does not start at 0)"
         Me.Label6.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         '
         'Form1

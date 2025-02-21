@@ -66,8 +66,12 @@ Partial Class Form1
             port = ""
         End If
 
-        nudSourceStartElement.Value = inOffset
-        nudTargetStartElement.Value = outOffset
+        nudSourcePortByteOffset.Value = inOffset
+        nudTargetPortByteOffset.Value = outOffset
+
+        'nudSourceStartElement.Value = inOffset
+        'nudTargetStartElement.Value = outOffset
+
 
         tbInUdtName.Text = inUdtName
         tbOutUdtName.Text = outUdtName
@@ -165,8 +169,8 @@ Partial Class Form1
         '    subRoutineName = "m_" & port.ToUpper & vendorNameClean.Substring(0, vendorNameLenUse) & deviceNameClean.Substring(0, devNameLenUse)
         'Else
         devNameLenUse = Math.Min(13 - condLen, deviceNameClean.Length)
-            venNameAvail = 16 - 2 - devNameLenUse - condLen
-            vendorNameLenUse = Math.Min(venNameAvail, vendorNameClean.Length)
+        venNameAvail = 16 - 2 - devNameLenUse - condLen
+        vendorNameLenUse = Math.Min(venNameAvail, vendorNameClean.Length)
         subRoutineName = "m_" & conditionVal.Substring(0, Math.Min(availCondChars, conditionVal.Length)) & "v" & CInt(vendorId).ToString("X") & "d" & CInt(deviceId).ToString("X")
 
         udtBufferHeapItemName = "b_" & conditionVal.Substring(0, Math.Min(availCondChars, conditionVal.Length)) & "v" & CInt(vendorId).ToString("X") & "d" & CInt(deviceId).ToString("X")
@@ -206,19 +210,19 @@ Partial Class Form1
             .Add("IO-Link device ID: " & deviceId)
 
 
-            .Add("The input data is gathered starting at memory location " & tbInSourceBlock.Text & nudSourceStartElement.Value)
-                .Add("The output data is written starting at memory location " & tbOutTargetBlock.Text & nudTargetStartElement.Value)
+            .Add("The input data is gathered starting at memory location " & tbInSourceBlock.Text & (nudSourcePortByteOffset.Value + nudSourceStartElement.Value))
+            .Add("The output data is written starting at memory location " & tbOutTargetBlock.Text & (nudTargetPortByteOffset.Value + nudTargetStartElement.Value))
 
             .Add("This subroutine uses data that is copied into buffers upon calling the subroutine")
-                .Add("Proper use requires you to create a heapitem of the udt named " & tbMainUdtName.Text & " that is used to read inputs and/or control outputs")
-                .Add("when calling the subroutine, enable optional input parameters and copy the following:")
-                .Add("[StartElementOfIOLMasterPortINData] to " & tbInSourceBlock.Text & "0 with 32 elements length")
-                .Add("[StartElementOfIOLMasterPortOUTData] to " & tbOutTargetBlock.Text & "0 with 32 elements length")
-                .Add("[UdtHeapItemInstance created in step 1] to " & tbUdtHeapItem.Text & " with 1 element length")
-                .Add("also enable optional output parameters and copy the following:")
-                .Add(tbOutTargetBlock.Text & "to [StartElementOfIOLMasterPortOUTData] with 32 elements length")
-                .Add("[StartElementOfIOLMasterPortOUTData] to " & tbOutTargetBlock.Text & "0 with 32 elements length")
-                .Add(tbUdtHeapItem.Text & " to [UdtHeapItemInstance created in step 1] with 1 element length")
+            .Add("Proper use requires you to create a heapitem of the udt named " & tbMainUdtName.Text & " that is used to read inputs and/or control outputs")
+            .Add("when calling the subroutine, enable optional input parameters and copy the following:")
+            .Add("[StartElementOfIOLMasterPortINData] to " & tbInSourceBlock.Text & "0 with 32 elements length")
+            .Add("[StartElementOfIOLMasterPortOUTData] to " & tbOutTargetBlock.Text & "0 with 32 elements length")
+            .Add("[UdtHeapItemInstance created in step 1] to " & tbUdtHeapItem.Text & " with 1 element length")
+            .Add("also enable optional output parameters and copy the following:")
+            .Add(tbOutTargetBlock.Text & "to [StartElementOfIOLMasterPortOUTData] with 32 elements length")
+            .Add("[StartElementOfIOLMasterPortOUTData] to " & tbOutTargetBlock.Text & "0 with 32 elements length")
+            .Add(tbUdtHeapItem.Text & " to [UdtHeapItemInstance created in step 1] with 1 element length")
 
         End With
         For Each str As String In mainCommentLines
@@ -403,7 +407,7 @@ Partial Class Form1
         If cbGenerateSRCall.Checked Then
             lstRungCommandsPGMmapIOLink.Add("$PRGRM MapIOLink")
             lstRungCommandsPGMmapIOLink.Add("STR ST1")
-            lstRungCommandsPGMmapIOLink.Add(String.Format("CALL {0} 0x1 DST511 ""3 {1}"" ""3 {2}""", {tbSubRoutineName.Text.Trim, String.Join(" ", {tbInSourceBlock.Text.Trim & nudSourceStartElement.Value, inDataBufferName & "0", 32, tbUdtHeapItem.Text.Trim, udtBufferHeapItemName, 1}), String.Join(" ", {udtBufferHeapItemName, tbUdtHeapItem.Text.Trim, 1, outDataBufferName & "0", tbOutTargetBlock.Text.Trim & nudTargetStartElement.Value, 32})}))
+            lstRungCommandsPGMmapIOLink.Add(String.Format("CALL {0} 0x1 DST511 ""3 {1}"" ""3 {2}""", {tbSubRoutineName.Text.Trim, String.Join(" ", {tbInSourceBlock.Text.Trim & (nudSourcePortByteOffset.Value + nudSourceStartElement.Value), inDataBufferName & "0", 32, tbUdtHeapItem.Text.Trim, udtBufferHeapItemName, 1}), String.Join(" ", {udtBufferHeapItemName, tbUdtHeapItem.Text.Trim, 1, outDataBufferName & "0", tbOutTargetBlock.Text.Trim & (nudTargetPortByteOffset.Value + nudTargetStartElement.Value), 32})}))
             lstRungCommandsPGMmapIOLink.Add("")
             lstRungCommandsPGMmapIOLink.Add("$PGMEND MapIOLink")
         End If

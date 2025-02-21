@@ -136,4 +136,11 @@ THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
 
         MsgBox(strLicense, MsgBoxStyle.Information, "License")
     End Sub
+
+    Private Sub cbEditDefaults_CheckedChanged(sender As Object, e As EventArgs) Handles cbEditDefaults.CheckedChanged
+        gbPreDefinedDefaults.Enabled = cbEditDefaults.Checked
+
+    End Sub
+
+
 End Class

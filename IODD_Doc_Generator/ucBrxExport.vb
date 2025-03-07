@@ -1,7 +1,10 @@
-﻿Imports System.Text.RegularExpressions
-Imports IolMasterDefinitions
+﻿Imports IolMasterDefinitions
+Imports System.Text.RegularExpressions
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 
-Partial Class Form1
+Public Class ucBrxExport
+
+    Public ds As DataSet
 
     Public dvIn, dvOut As DataView
 
@@ -32,7 +35,7 @@ Partial Class Form1
     Private deviceNameClean As String
     Private vendorNameClean As String
 
-
+    Public selectedPort As portInfo
 
     Public Sub initBrxExportTab()
 
@@ -60,10 +63,10 @@ Partial Class Form1
         inUdtName = "tI" & "v" & CInt(vendorId).ToString("X") & "d" & CInt(deviceId).ToString("X")
         outUdtName = "tO" & "v" & CInt(vendorId).ToString("X") & "d" & CInt(deviceId).ToString("X")
 
-        If Not IsNothing(tscbIolMasterPorts.SelectedItem) Then
-            inOffset = CType(tscbIolMasterPorts.SelectedItem, portInfo).inByteStart
-            outOffset = CType(tscbIolMasterPorts.SelectedItem, portInfo).outByteStart
-            port = CType(tscbIolMasterPorts.SelectedItem, portInfo).name
+        If Not IsNothing(selectedPort) Then
+            inOffset = selectedPort.inByteStart
+            outOffset = selectedPort.outByteStart
+            port = selectedPort.name
         Else
             inOffset = 0
             outOffset = 0
@@ -200,6 +203,21 @@ Partial Class Form1
     End Sub
 
     Private Sub ExportBRXToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ExportBRXToolStripMenuItem.Click
+        export()
+    End Sub
+
+    Public Sub autosaveAll(dir As String)
+        If cbSelectedOption.Items.Count > 0 Then
+            For i As Integer = 0 To cbSelectedOption.Items.Count - 1
+                cbSelectedOption.SelectedIndex = i
+                export(dir)
+            Next
+        Else
+            export(dir)
+        End If
+    End Sub
+
+    Private Sub export(Optional autoSaveDir As String = "")
 
         calculateUdts()
 
@@ -434,20 +452,31 @@ Partial Class Form1
         If cbGenerateSRCall.Checked Then lstMemConfg.Add(String.Join(" ", {"MapIOLink", "PROGRAM", "0 -1"}))
 
         lstMemConfg.Add("#END")
-
-        Dim sfd As New SaveFileDialog
-        sfd.AddExtension = True
-        sfd.Filter = "text file | *.txt"
-        sfd.FileName = "BrxExport_" & vendorNameClean & "_" & deviceNameClean & "_" & tbSubRoutineName.Text.Trim
-        If sfd.ShowDialog = DialogResult.OK Then
+        If String.IsNullOrWhiteSpace(autoSaveDir) Then
+            Dim sfd As New SaveFileDialog
+            sfd.AddExtension = True
+            sfd.Filter = "text file | *.txt"
+            sfd.FileName = "BrxExport_" & vendorNameClean & "_" & deviceNameClean & "_" & tbSubRoutineName.Text.Trim
+            If sfd.ShowDialog = DialogResult.OK Then
+                Dim lstOut As New List(Of String)
+                lstOut.AddRange(lstUDTconfig)
+                lstOut.AddRange(lstMemConfg)
+                '   lstOut.AddRange(lstElmDoc)
+                If cbGenerateSR.Checked Then lstOut.AddRange(lstRungCommands)
+                If cbGenerateSRCall.Checked Then lstOut.AddRange(lstRungCommandsPGMmapIOLink)
+                System.IO.File.WriteAllLines(sfd.FileName, lstOut.ToArray)
+            End If
+        Else
             Dim lstOut As New List(Of String)
             lstOut.AddRange(lstUDTconfig)
             lstOut.AddRange(lstMemConfg)
             '   lstOut.AddRange(lstElmDoc)
             If cbGenerateSR.Checked Then lstOut.AddRange(lstRungCommands)
             If cbGenerateSRCall.Checked Then lstOut.AddRange(lstRungCommandsPGMmapIOLink)
-            System.IO.File.WriteAllLines(sfd.FileName, lstOut.ToArray)
+            Dim filename As String = autoSaveDir & "\" & "BrxExport_" & vendorNameClean & "_" & deviceNameClean & "_" & tbSubRoutineName.Text.Trim & ".txt"
+            System.IO.File.WriteAllLines(filename, lstOut.ToArray)
         End If
+
     End Sub
 
     Private Function getBRXMathcmd(srcBlock As String, trgtBlock As String, byteOffset As Integer, tp As String, bo As String, Optional bl As String = "") As String
@@ -830,6 +859,10 @@ The subroutine uses a buffer data block that is copied to and from upon calling 
         End If
 
 
+    End Sub
+
+    Private Sub cbEditDefaults_CheckedChanged(sender As Object, e As EventArgs) Handles cbEditDefaults.CheckedChanged
+        gbPreDefinedDefaults.Enabled = cbEditDefaults.Checked
     End Sub
 
     Public Structure explMsgParam

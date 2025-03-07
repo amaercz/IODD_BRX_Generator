@@ -32,8 +32,8 @@ Public Class Form1
         Dim env = CoreWebView2Environment.CreateAsync(Nothing, userDataFolder)
         env.Wait()
         Await WebView21.EnsureCoreWebView2Async(env.Result)
-        Await WebView22.EnsureCoreWebView2Async(env.Result)
-        loadHowTo()
+        Await UcBrxExport1.WebView22.EnsureCoreWebView2Async(env.Result)
+        UcBrxExport1.loadHowTo()
         Dim path As String = AppDomain.CurrentDomain.BaseDirectory
         iolMasters = New clsIolMasterDefinitions(path & "\IOLDef\", True)
         If System.IO.File.Exists(path & "\styling.css") Then cssStyling = System.IO.File.ReadAllText(path & "\styling.css")
@@ -56,7 +56,11 @@ Public Class Form1
                 WebView21.NavigateToString(currentOutput)
                 ds = New DataSet
                 ds.Merge(iodd11.ds)
-                initBrxExportTab()
+                UcBrxExport1.ds = New DataSet : UcBrxExport1.ds.Merge(iodd11.ds)
+                UcBrxExport1.selectedPort = tscbIolMasterPorts.SelectedItem
+                UcBrxExport1.initBrxExportTab()
+
+                '  initBrxExportTab()
             Catch ex As Exception
                 MsgBox("Can't load file " & System.IO.Path.GetFileName(file))
             End Try
@@ -67,7 +71,10 @@ Public Class Form1
                 WebView21.NavigateToString(currentOutput)
                 ds = New DataSet
                 ds.Merge(iodd10.ds)
-                initBrxExportTab()
+                UcBrxExport1.ds = New DataSet : UcBrxExport1.ds.Merge(iodd10.ds)
+                UcBrxExport1.selectedPort = tscbIolMasterPorts.SelectedItem
+                UcBrxExport1.initBrxExportTab()
+                '  initBrxExportTab()
             Catch ex As Exception
                 MsgBox("Can't load file " & System.IO.Path.GetFileName(file))
             End Try
@@ -137,10 +144,20 @@ THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
         MsgBox(strLicense, MsgBoxStyle.Information, "License")
     End Sub
 
-    Private Sub cbEditDefaults_CheckedChanged(sender As Object, e As EventArgs) Handles cbEditDefaults.CheckedChanged
-        gbPreDefinedDefaults.Enabled = cbEditDefaults.Checked
-
+    Private Sub BatcgBRXExportToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles BatcgBRXExportToolStripMenuItem.Click
+        Dim fbd As New FolderBrowserDialog
+        If fbd.ShowDialog = DialogResult.OK Then
+            Dim files() As String = System.IO.Directory.GetFiles(fbd.SelectedPath, "*IODD1*.xml", SearchOption.AllDirectories)
+            Dim lstFail As New List(Of String)
+            For Each file As String In files
+                Try
+                    loadIODD(file)
+                    UcBrxExport1.autosaveAll(fbd.SelectedPath)
+                Catch ex As Exception
+                    lstFail.Add(file)
+                End Try
+            Next
+            System.IO.File.WriteAllLines(fbd.SelectedPath & "\failed.txt", lstFail.ToArray)
+        End If
     End Sub
-
-
 End Class

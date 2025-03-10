@@ -429,7 +429,7 @@ Public Class ucBrxExport
         If cbGenerateSRCall.Checked Then
             lstRungCommandsPGMmapIOLink.Add("$PRGRM MapIOLink")
             lstRungCommandsPGMmapIOLink.Add("STR ST1")
-            lstRungCommandsPGMmapIOLink.Add(String.Format("CALL {0} 0x1 DST511 ""3 {1}"" ""3 {2}""", {tbSubRoutineName.Text.Trim, String.Join(" ", {tbInSourceBlock.Text.Trim & (nudSourcePortByteOffset.Value + nudSourceStartElement.Value), inDataBufferName & "0", 32, tbUdtHeapItem.Text.Trim, udtBufferHeapItemName, 1}), String.Join(" ", {udtBufferHeapItemName, tbUdtHeapItem.Text.Trim, 1, outDataBufferName & "0", tbOutTargetBlock.Text.Trim & (nudTargetPortByteOffset.Value + nudTargetStartElement.Value), 32})}))
+            lstRungCommandsPGMmapIOLink.Add(String.Format("CALL {0} 0x1 DST511 ""3 {1}"" ""3 {2}""", {tbSubRoutineName.Text.Trim, String.Join(" ", {tbInSourceBlock.Text.Trim & (nudSourcePortByteOffset.Value + nudSourceStartElement.Value), inDataBufferName & "0", 32, tbUdtHeapItem.Text.Trim, udtBufferHeapItemName, 1, tbOutTargetBlock.Text.Trim & (nudTargetPortByteOffset.Value + nudTargetStartElement.Value), outDataBufferName & "0", 32}), String.Join(" ", {udtBufferHeapItemName, tbUdtHeapItem.Text.Trim, 1, outDataBufferName & "0", tbOutTargetBlock.Text.Trim & (nudTargetPortByteOffset.Value + nudTargetStartElement.Value), 32})}))
             lstRungCommandsPGMmapIOLink.Add("")
             lstRungCommandsPGMmapIOLink.Add("$PGMEND MapIOLink")
         End If

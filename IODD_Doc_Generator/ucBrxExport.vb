@@ -289,7 +289,7 @@ Public Class ucBrxExport
             lstUDTconfig.Add("#BEGIN UDT_CONFIG")
             lstUDTconfig.Add(tbInUdtName.Text.Trim)
             For Each rw As DataRow In ds.Tables("inUdt").Rows
-                lstUDTconfig.Add(String.Join(",", {rw.Item("fieldName"), rw.Item("fieldType"), rw.Item("fieldStartDword") & ":0", "Read-Write, Native, Short"}))
+                lstUDTconfig.Add(String.Join(",", {rw.Item("fieldName"), rw.Item("fieldType"), rw.Item("fieldStartDword") & ":" & rw.Item("fieldStartBit_Byte"), "Read-Write, Native, Short"}))
             Next
             lstUDTconfig.Add("#END")
 
@@ -345,7 +345,7 @@ Public Class ucBrxExport
             lstUDTconfig.Add("#BEGIN UDT_CONFIG")
             lstUDTconfig.Add(tbOutUdtName.Text.Trim)
             For Each rw As DataRow In ds.Tables("outUdt").Rows
-                lstUDTconfig.Add(String.Join(",", {rw.Item("fieldName"), rw.Item("fieldType"), rw.Item("fieldStartDword") & ":0", "Read-Write, Native, Short"}))
+                lstUDTconfig.Add(String.Join(",", {rw.Item("fieldName"), rw.Item("fieldType"), rw.Item("fieldStartDword") & ":" & rw.Item("fieldStartBit_Byte"), "Read-Write, Native, Short"}))
             Next
             lstUDTconfig.Add("#END")
 
@@ -414,8 +414,8 @@ Public Class ucBrxExport
         lstRungCommands.Add("RET")
         lstRungCommands.Add("$LGCEND " & tbSubRoutineName.Text.Trim)
 
-        Dim udtOutStart As Integer = ds.Tables("inUdt").Rows.Count
-        Dim enableStart As Integer = udtOutStart + ds.Tables("outUdt").Rows.Count
+        Dim udtOutStart As Integer = ds.Tables("inUdt").Compute("MAX(fieldStartDword)", "") + 1
+        Dim enableStart As Integer = udtOutStart + ds.Tables("outUdt").Compute("MAX(fieldStartDword)", "") + 1
 
         lstUDTconfig.Add("#BEGIN UDT_CONFIG")
         lstUDTconfig.Add(tbMainUdtName.Text.Trim)
@@ -534,7 +534,7 @@ Public Class ucBrxExport
         With ds.Tables.Add("inUdt")
             .Columns.Add("fieldName", GetType(String))
             .Columns.Add("fieldType", GetType(String))
-            .Columns.Add("fieldStartByte", GetType(Integer))
+            .Columns.Add("fieldStartBit_Byte", GetType(Integer))
             .Columns.Add("fieldStartDword", GetType(Integer))
             .Columns.Add("sourceBlock", GetType(String))
             .Columns.Add("sourceByteOffset", GetType(Integer))
@@ -553,10 +553,24 @@ Public Class ucBrxExport
             Dim udtc As New UdtConfig
             udtc.fieldName = rw.Item("udtFieldName").trim
             udtc.fieldType = getBrxType(rw.Item("itemType").trim, rw.Item("itemBitLengthNum"))
-            udtc.fieldStartByte = posCnt * 4
-            udtc.fieldStartDword = posCnt
-            udtc.sourceBlock = tbInSourceBlock.Text
             If Not String.IsNullOrWhiteSpace(udtc.fieldType) Then
+                Select Case udtc.fieldType
+                    Case "BIT"
+                        udtc.fieldStartDword = (posCnt - (posCnt Mod 32)) / 32
+                        udtc.fieldStartBit_Byte = (posCnt Mod 32)
+                        posCnt += 1
+                    Case "SBYTE", "BYTE"
+                        If Not (posCnt Mod 8 = 0) Then posCnt += (8 - posCnt Mod 8)
+                        udtc.fieldStartDword = (posCnt - (posCnt Mod 32)) / 32
+                        udtc.fieldStartBit_Byte = (posCnt Mod 32) / 8
+                        posCnt += 8
+                    Case Else
+                        If Not (posCnt Mod 32 = 0) Then posCnt += (32 - posCnt Mod 32)
+                        udtc.fieldStartDword = (posCnt - (posCnt Mod 32)) / 32
+                        posCnt += 32
+                End Select
+
+                udtc.sourceBlock = tbInSourceBlock.Text
                 Dim bit, bt As Integer
                 bit = rw.Item("itemBitOffset") Mod 8
                 If rw.Item("itemBitLength") <> "" Then
@@ -571,7 +585,7 @@ Public Class ucBrxExport
                 udtc.sourceType = rw.Item("itemType")
                 udtc.sourceBitLength = rw.Item("itemBitLengthNum")
                 udtc.itemValues = rw.Item("itemValues")
-                posCnt += 1
+
                 ds.Tables("inUdt").Rows.Add(udtc.getValues)
             End If
 
@@ -583,7 +597,7 @@ Public Class ucBrxExport
         With ds.Tables.Add("outUdt")
             .Columns.Add("fieldName", GetType(String))
             .Columns.Add("fieldType", GetType(String))
-            .Columns.Add("fieldStartByte", GetType(Integer))
+            .Columns.Add("fieldStartBit_Byte", GetType(Integer))
             .Columns.Add("fieldStartDword", GetType(Integer))
             .Columns.Add("sourceBlock", GetType(String))
             .Columns.Add("sourceByteOffset", GetType(Integer))
@@ -601,10 +615,24 @@ Public Class ucBrxExport
             Dim udtc As New UdtConfig
             udtc.fieldName = rw.Item("udtFieldName").trim
             udtc.fieldType = getBrxType(rw.Item("itemType").trim, rw.Item("itemBitLengthNum"))
-            udtc.fieldStartByte = posCnt * 4
-            udtc.fieldStartDword = posCnt
-            udtc.sourceBlock = tbInSourceBlock.Text
             If Not String.IsNullOrWhiteSpace(udtc.fieldType) Then
+                Select Case udtc.fieldType
+                    Case "BIT"
+                        udtc.fieldStartDword = (posCnt - (posCnt Mod 32)) / 32
+                        udtc.fieldStartBit_Byte = (posCnt Mod 32)
+                        posCnt += 1
+                    Case "SBYTE", "BYTE"
+                        If Not (posCnt Mod 8 = 0) Then posCnt += (8 - posCnt Mod 8)
+                        udtc.fieldStartDword = (posCnt - (posCnt Mod 32)) / 32
+                        udtc.fieldStartBit_Byte = (posCnt Mod 32) / 8
+                        posCnt += 8
+                    Case Else
+                        If Not (posCnt Mod 32 = 0) Then posCnt += (32 - posCnt Mod 32)
+                        udtc.fieldStartDword = (posCnt - (posCnt Mod 32)) / 32
+                        posCnt += 32
+                End Select
+
+                udtc.sourceBlock = tbInSourceBlock.Text
                 Dim bit, bt As Integer
                 bit = rw.Item("itemBitOffset") Mod 8
                 If rw.Item("itemBitLength") <> "" Then
@@ -619,7 +647,7 @@ Public Class ucBrxExport
                 udtc.sourceType = rw.Item("itemType")
                 udtc.sourceBitLength = rw.Item("itemBitLengthNum")
                 udtc.itemValues = rw.Item("itemValues")
-                posCnt += 1
+
                 ds.Tables("outUdt").Rows.Add(udtc.getValues)
             End If
 
@@ -630,7 +658,7 @@ Public Class ucBrxExport
     Structure UdtConfig
         Public fieldName As String
         Public fieldType As String
-        Public fieldStartByte As Integer
+        Public fieldStartBit_Byte As Integer
         Public fieldStartDword As Integer
         Public sourceBlock As String
         Public sourceByteOffset As Integer
@@ -641,7 +669,7 @@ Public Class ucBrxExport
         Public itemValues As String
 
         Public Function getValues() As String()
-            Return {fieldName, fieldType, fieldStartByte, fieldStartDword, sourceBlock, sourceByteOffset, sourceByteLength, sourceBitShift, sourceType, sourceBitLength, itemValues}
+            Return {fieldName, fieldType, fieldStartBit_Byte, fieldStartDword, sourceBlock, sourceByteOffset, sourceByteLength, sourceBitShift, sourceType, sourceBitLength, itemValues}
         End Function
     End Structure
 

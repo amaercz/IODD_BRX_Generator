@@ -93,27 +93,95 @@ Public Class ucBrxExport
         If Not IsNothing(ds) AndAlso ds.Tables.Contains("processData") Then
             If Not ds.Tables("processData").Columns.Contains("udtFieldName") Then
                 ds.Tables("processData").Columns.Add("udtFieldName", GetType(String))
-                For Each dr As DataRow In ds.Tables("processData").Rows
-                    Dim fn As String = dr.Item("itemName")
-                    Dim re As New Regex("\W")
-                    fn = re.Replace(fn, "")
-                    If fn.Length > 16 Then
-                        re = New Regex("[^a-zA-z0-9\s]")
-                        fn = re.Replace(dr.Item("itemName").trim, "")
-                        Dim words() = fn.Split({" "}, StringSplitOptions.RemoveEmptyEntries)
-                        fn = ""
-                        Dim cntPerWord As Integer = (16 - (16 Mod words.Count)) / words.Count
-                        For Each word As String In words
-                            If word.Length > 1 And cntPerWord > 1 Then
-                                fn = fn & word.Substring(0, 1).ToUpper & word.Substring(1, Math.Min(cntPerWord - 1, word.Length - 1))
+                ds.Tables("processData").Columns.Add("udtFieldNameCount", GetType(Integer), "COUNT(udtFieldName)")
+                ds.Tables("processData").DefaultView.RowFilter = ""
+                Dim dtPdIdAndDirs As DataTable = ds.Tables("processData").DefaultView.ToTable(True, {"pdId", "pdDir"})
+                For Each drIdDir As DataRow In dtPdIdAndDirs.Rows
+                    'ds.Tables("processData").DefaultView.RowFilter = String.Format("pdId = '{0}' AND pdDir = '{1}'", {drIdDir.Item("pdId"), drIdDir("pdDir")})
+
+                    'ds.Tables("processData").DefaultView.Sort = "itemName ASC"
+
+                    Dim curName As String = ""
+                    For Each dr As DataRow In ds.Tables("processData").Select(String.Format("pdId = '{0}' AND pdDir = '{1}'", {drIdDir.Item("pdId"), drIdDir("pdDir")}), "itemName ASC")
+
+                        Dim duplicateCount As Integer = ds.Tables("processData").Select(String.Format("pdId = '{0}' AND pdDir = '{1}' AND itemName = '{2}'", {drIdDir.Item("pdId"), drIdDir("pdDir"), dr.Item("itemName")})).Count
+                        Dim unificationChars As Integer = 0
+                        If duplicateCount > 1 Then unificationChars = 3
+
+                        Dim fn As String = dr.Item("itemName")
+                        Dim re As New Regex("\W")
+                        fn = re.Replace(fn, "")
+                        If fn.Length > 16 - unificationChars Then
+                            re = New Regex("[^a-zA-z0-9\s]")
+
+
+                            'isolate numbers between spaces to mantain them whenever possible (the thought is that numbers have stronger menaing than words)
+                            Dim lstIndexes As New List(Of Integer)
+                            Dim numWordCount As Integer = 0
+                            Dim numCharCount As Integer = 0
+                            For Each mtch As Match In Regex.Matches(dr.Item("itemName").trim, "[0-9]+")
+                                lstIndexes.Add(mtch.Index)
+                                lstIndexes.Add(mtch.Index + mtch.ToString.Length)
+                                numCharCount += mtch.ToString.Length
+                            Next
+                            lstIndexes.Sort()
+                            lstIndexes.Reverse()
+                            Dim strSpascedNums As String = dr.Item("itemName").trim
+                            For Each idx As Integer In lstIndexes
+                                strSpascedNums = strSpascedNums.Insert(idx, " ")
+                            Next
+                            numWordCount = Regex.Matches(dr.Item("itemName").trim, "[0-9]+").Count
+
+                            fn = re.Replace(strSpascedNums, "")
+                            Dim words() = fn.Split({" "}, StringSplitOptions.RemoveEmptyEntries)
+
+                            fn = ""
+                            If 16 - numCharCount - unificationChars >= words.Count - numWordCount Then 'if this is true we can fit at least one character per word
+
+                                Dim cntPerWord As Integer = ((16 - numCharCount - unificationChars) - ((16 - numCharCount - unificationChars) Mod (words.Count - numWordCount))) / (words.Count - numWordCount)
+                                For Each word As String In words
+                                    If IsNumeric(word) Then
+                                        fn = fn & word
+                                    ElseIf word.Length > 1 And cntPerWord > 1 Then
+                                        fn = fn & word.Substring(0, 1).ToUpper & word.Substring(1, Math.Min(cntPerWord - 1, word.Length - 1))
+                                    Else
+                                        fn = fn & word.Substring(0, 1).ToUpper
+                                    End If
+                                Next
                             Else
-                                fn = fn & word.Substring(0, 1).ToUpper
+                                If numCharCount < 16 - unificationChars Then
+                                    fn = "F"
+                                    For Each word As String In words
+                                        If IsNumeric(word) Then
+                                            fn = fn & word
+                                        End If
+                                    Next
+                                Else 'throwing our hands up in the air, we've got more than 16 digit identifying numbers, lets just list the items bitoffset
+                                    fn = "BitOffset"
+                                    unificationChars = 3
+                                End If
                             End If
-                        Next
-                    End If
-                    dr.Item("udtFieldName") = fn.Substring(0, Math.Min(fn.Length, 16))
+
+                        End If
+                        If unificationChars > 0 Then fn &= dr.Item("itemBitOffset").ToString.PadLeft(unificationChars, "0")
+                        dr.Item("udtFieldName") = fn.Substring(0, Math.Min(fn.Length, 16))
+                    Next
+
+                    'Now after all this work lets make sure we didn't accidentally introduce a new duplicate udt filedname. If we did, we'll just cut the name and add the BitOffset
+                    Dim dvDistFieldNames As DataView = New DataView(ds.Tables("processData"), String.Format("pdId = '{0}' AND pdDir = '{1}'", {drIdDir.Item("pdId"), drIdDir("pdDir")}), "itemName ASC", DataViewRowState.CurrentRows)
+                    For Each drDist As DataRow In dvDistFieldNames.ToTable(True, {"udtFieldName"}).Rows
+                        If ds.Tables("processData").Select(String.Format("pdId = '{0}' AND pdDir = '{1}' AND udtFieldName = '{2}'", {drIdDir.Item("pdId"), drIdDir("pdDir"), drDist.Item("udtFieldName")})).Count > 1 Then
+                            For Each dr As DataRow In ds.Tables("processData").Select(String.Format("pdId = '{0}' AND pdDir = '{1}' AND udtFieldName = '{2}'", {drIdDir.Item("pdId"), drIdDir("pdDir"), drDist.Item("udtFieldName")}))
+                                Dim newFieldname As String = dr.Item("udtFieldName")
+                                newFieldname = newFieldname.Substring(0, Math.Min(newFieldname.Length, 13)) & dr.Item("itemBitOffset").ToString.PadLeft(3, "0")
+                                dr.Item("udtFieldName") = newFieldname
+                            Next
+                        End If
+                    Next
                 Next
             End If
+
+
             For Each dgv As DataGridView In {dgvIn, dgvOut}
                 dgv.DataSource = Nothing
                 dgv.Columns.Clear()
@@ -124,23 +192,40 @@ Public Class ucBrxExport
                 col = New DataGridViewTextBoxColumn : col.HeaderText = "itemType" : col.DataPropertyName = "itemType" : dgv.Columns.Add(col)
                 col = New DataGridViewTextBoxColumn : col.HeaderText = "itemBitOffset" : col.DataPropertyName = "itemBitOffset" : dgv.Columns.Add(col)
                 col = New DataGridViewTextBoxColumn : col.HeaderText = "itemBitLength" : col.DataPropertyName = "itemBitLength" : dgv.Columns.Add(col)
+                col = New DataGridViewTextBoxColumn : col.HeaderText = "udtFieldNameCount" : col.DataPropertyName = "udtFieldNameCount" : dgv.Columns.Add(col)
             Next
             dvIn = New DataView(ds.Tables("processData"), "pdDir = 'In'", "pdID ASC, pdDir ASC, PILsbByte ASC, PILsbBit ASC", DataViewRowState.CurrentRows)
             dvOut = New DataView(ds.Tables("processData"), "pdDir = 'Out'", "pdID ASC, pdDir ASC, PILsbByte ASC, PILsbBit ASC", DataViewRowState.CurrentRows)
             dgvIn.DataSource = dvIn
             dgvOut.DataSource = dvOut
 
-            ds.Tables.Add(ds.Tables("processData").DefaultView.ToTable("conditions", True, {"conditionValName", "conditionValue", "conditionISDU"}))
+            ds.Tables.Add(ds.Tables("processData").DefaultView.ToTable("conditions", True, {"conditionValName", "conditionValue", "conditionISDU", "conditionVarName"}))
+
+
+
+            ds.Tables("conditions").Columns.Add("DisplayString")
+            If ds.Tables("conditions").Rows.Count = 1 Then
+                ds.Tables("conditions").Rows(0).Item("DisplayString") = "This device does not have multiple Process Data layout options"
+            Else
+                For Each dr As DataRow In ds.Tables("conditions").Rows
+                    If Not String.IsNullOrEmpty(dr.Item("conditionValName")) Then
+                        dr.Item("DisplayString") = String.Join(" ~ ", {dr.Item("conditionVarName") & " = " & dr.Item("conditionValue") & " " & (dr.Item("conditionValName")), dr.Item("conditionISDU")})
+                    Else
+                        dr.Item("DisplayString") = String.Join(" ~ ", {dr.Item("conditionVarName") & " = " & dr.Item("conditionValue"), dr.Item("conditionISDU")})
+                    End If
+                Next
+            End If
+
             cbSelectedOption.DataSource = ds.Tables("conditions")
-            cbSelectedOption.ValueMember = "conditionValName"
-            cbSelectedOption.DisplayMember = "conditionValName"
-            calculateUdts()
-            updateTypeAndSubName()
-        End If
+                cbSelectedOption.ValueMember = "conditionValue"
+                cbSelectedOption.DisplayMember = "DisplayString"
+                calculateUdts()
+                updateTypeAndSubName()
+            End If
 
 
 
-        tabCtrlBrxExport.Enabled = True
+            tabCtrlBrxExport.Enabled = True
         msBrxExport.Enabled = True
 
     End Sub
@@ -210,6 +295,7 @@ Public Class ucBrxExport
         If cbSelectedOption.Items.Count > 0 Then
             For i As Integer = 0 To cbSelectedOption.Items.Count - 1
                 cbSelectedOption.SelectedIndex = i
+
                 export(dir)
             Next
         Else
@@ -218,8 +304,20 @@ Public Class ucBrxExport
     End Sub
 
     Private Sub export(Optional autoSaveDir As String = "")
+        updateSelectedCondition()
 
         calculateUdts()
+
+        If dvIn.ToTable().Rows.Count <> dvIn.ToTable(True, {"udtFieldName"}).Rows.Count _
+            Or dvOut.ToTable().Rows.Count <> dvOut.ToTable(True, {"udtFieldName"}).Rows.Count Then
+            If String.IsNullOrWhiteSpace(autoSaveDir) Then
+                MsgBox("Could not generate unique UDT filed names. Sorry, this won't work :(")
+                Return
+            Else
+                Throw New Exception("couldn't create unique UDT")
+            End If
+
+        End If
 
 
         Dim mainCommentString As String = ""
@@ -414,13 +512,13 @@ Public Class ucBrxExport
         lstRungCommands.Add("RET")
         lstRungCommands.Add("$LGCEND " & tbSubRoutineName.Text.Trim)
 
-        Dim udtOutStart As Integer = ds.Tables("inUdt").Compute("MAX(fieldStartDword)", "") + 1
-        Dim enableStart As Integer = udtOutStart + ds.Tables("outUdt").Compute("MAX(fieldStartDword)", "") + 1
+        Dim udtOutStart As Integer = 0
+        Dim enableStart As Integer = 0 'udtOutStart + ds.Tables("outUdt").Compute("MAX(fieldStartDword)", "") + 1
 
         lstUDTconfig.Add("#BEGIN UDT_CONFIG")
         lstUDTconfig.Add(tbMainUdtName.Text.Trim)
-        If ds.Tables("inUdt").Rows.Count > 0 Then lstUDTconfig.Add(String.Join(",", {"in", tbInUdtName.Text.Trim, "0" & ":0", "Read-Write, Native, Short"}))
-        If ds.Tables("outUdt").Rows.Count > 0 Then lstUDTconfig.Add(String.Join(",", {"out", tbOutUdtName.Text.Trim, udtOutStart & ":0", "Read-Write, Native, Short"}))
+        If ds.Tables("inUdt").Rows.Count > 0 Then lstUDTconfig.Add(String.Join(",", {"in", tbInUdtName.Text.Trim, "0" & ":0", "Read-Write, Native, Short"})) : udtOutStart = ds.Tables("inUdt").Compute("MAX(fieldStartDword)", "") + 1
+        If ds.Tables("outUdt").Rows.Count > 0 Then lstUDTconfig.Add(String.Join(",", {"out", tbOutUdtName.Text.Trim, udtOutStart & ":0", "Read-Write, Native, Short"})) : enableStart = udtOutStart + ds.Tables("outUdt").Compute("MAX(fieldStartDword)", "") + 1
         If ds.Tables("outUdt").Rows.Count > 0 Then lstUDTconfig.Add(String.Join(",", {"enableOutputs", "BIT", enableStart & ":0", "Read-Write, Native, Short"}))
         lstUDTconfig.Add("#END")
 
@@ -703,15 +801,19 @@ Public Class ucBrxExport
 
     Private Sub ComboBox1_SelectedValueChanged(sender As Object, e As EventArgs) Handles cbSelectedOption.SelectedValueChanged
         '   updateProcessData()
+        updateSelectedCondition()
 
+    End Sub
+
+    Public Sub updateSelectedCondition()
         If IsNothing(cbSelectedOption.SelectedValue) OrElse String.IsNullOrWhiteSpace(cbSelectedOption.SelectedValue.ToString) Then
             dvIn.RowFilter = "pdDir = 'In'"
             dvOut.RowFilter = "pdDir = 'Out'"
             conditionVal = ""
             conditionISDU = "0"
         Else
-            dvIn.RowFilter = "pdDir = 'In' AND " & "conditionValName = '" & cbSelectedOption.SelectedValue.ToString & "'"
-            dvOut.RowFilter = "pdDir = 'Out' AND " & "conditionValName = '" & cbSelectedOption.SelectedValue.ToString & "'"
+            dvIn.RowFilter = "pdDir = 'In' AND " & "conditionValue = '" & cbSelectedOption.SelectedValue.ToString & "'"
+            dvOut.RowFilter = "pdDir = 'Out' AND " & "conditionValue = '" & cbSelectedOption.SelectedValue.ToString & "'"
             If Not IsDBNull(CType(cbSelectedOption.SelectedItem, DataRowView).Item("conditionValue")) Then
                 conditionVal = CType(cbSelectedOption.SelectedItem, DataRowView).Item("conditionValue")
                 conditionDesc = cbSelectedOption.SelectedValue.ToString
@@ -891,6 +993,10 @@ The subroutine uses a buffer data block that is copied to and from upon calling 
 
     Private Sub cbEditDefaults_CheckedChanged(sender As Object, e As EventArgs) Handles cbEditDefaults.CheckedChanged
         gbPreDefinedDefaults.Enabled = cbEditDefaults.Checked
+    End Sub
+
+    Private Sub cbSelectedOption_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cbSelectedOption.SelectedIndexChanged
+        updateSelectedCondition()
     End Sub
 
     Public Structure explMsgParam

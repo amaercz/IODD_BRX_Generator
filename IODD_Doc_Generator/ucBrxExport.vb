@@ -398,7 +398,20 @@ Public Class ucBrxExport
             For Each rw As DataRow In ds.Tables("inUdt").Rows
 
                 lstRungCommands.Add("#BEGIN FMT_COMMENT")
+                lstRungCommands.Add("""<FONT tsize=2>""")
                 lstRungCommands.Add(String.Format("""{2}{3}:{5} -> {0}, Type: {1}, SourceLength: {4}bit""", {rw.Item("fieldName"), rw.Item("fieldType"), inDataBufferName, rw.Item("sourceByteOffset"), rw.Item("sourceBitLength"), rw.Item("sourceBitShift")}))
+
+                Select Case rw.Item("fieldType")
+                    Case "SWORD", "SBYTE", "SDWORD"
+                        lstRungCommands.Add("""<br>Source bytes are moved to the rawBuffer to swap bytes and align them on a 32-bit boundary.""")
+                        lstRungCommands.Add("""<br>Once bits are shifted and masked to match the source datatype the excess bitlength is filled with the source's sign bit to preserve the sign.""")
+                        lstRungCommands.Add("""<br>The result is copied to the UdtBufferStructure.""")
+                    Case "UWORD", "UBYTE"
+                        lstRungCommands.Add("""<br>Source bytes are moved to the rawBuffer to swap bytes and align them on a 32-bit boundary.""")
+                        lstRungCommands.Add("""<br>Once bits are shifted and masked to match the source datatype they are copied to the UdtBufferStructure.""")
+                End Select
+
+                lstRungCommands.Add("""</FONT>""")
                 lstRungCommands.Add("#End")
 
                 If rw.Item("fieldType") = "BIT" Then
@@ -466,7 +479,19 @@ Public Class ucBrxExport
             For Each rw As DataRow In ds.Tables("outUdt").Rows
 
                 lstRungCommands.Add("#BEGIN FMT_COMMENT")
-                lstRungCommands.Add(String.Format("""{0} -> {2}{3}:{5}, Type: {1}, TargetLength: {4}bit""", {rw.Item("fieldName"), rw.Item("fieldType"), outDataBufferName, rw.Item("sourceByteOffset"), rw.Item("sourceBitLength"), rw.Item("sourceBitShift")}))
+                lstRungCommands.Add("""<FONT tsize=2>""")
+                lstRungCommands.Add(String.Format("""{2}{3}:{5} -> {0}, Type: {1}, SourceLength: {4}bit""", {rw.Item("fieldName"), rw.Item("fieldType"), outDataBufferName, rw.Item("sourceByteOffset"), rw.Item("sourceBitLength"), rw.Item("sourceBitShift")}))
+
+                Select Case rw.Item("fieldType")
+                    Case "SWORD", "SBYTE", "SDWORD"
+                        lstRungCommands.Add("""<br>Source bytes are moved to the rawBuffer to swap bytes and align them on a 32-bit boundary.""")
+                        lstRungCommands.Add("""<br>Once bits are shifted and masked to match the source datatype the excess bitlength is filled with the source's sign bit to preserve the sign.""")
+                        lstRungCommands.Add("""<br>The result is copied to the UdtBufferStructure.""")
+                    Case "UWORD", "UBYTE"
+                        lstRungCommands.Add("""<br>Source bytes are moved to the rawBuffer to swap bytes and align them on a 32-bit boundary.""")
+                        lstRungCommands.Add("""<br>Once bits are shifted and masked to match the source datatype they are copied to the UdtBufferStructure.""")
+                End Select
+                lstRungCommands.Add("""</FONT>""")
                 lstRungCommands.Add("#End")
 
                 If rw.Item("fieldType") = "BIT" Then
